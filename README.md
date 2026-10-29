@@ -18,3 +18,4 @@
 2. [位于仓库根目录的基本理解文档 ./ACM-OJ-Understanding.md ](./ACM-OJ-Understanding.md) ; 我们后续会考虑单独建立文件夹来做 `code understanding` 维护 , 而不是堆砌在一个文档中 
 3. [./develop-rules/](./develop-rules/) 中保存的文档记录着我们对 agent 协助开发的尝试 , 其中的一些文档用于解决协助开发中的一些问题 , 是我们对 `best practice` 的实践
 4. [./knowledge/](./knowledge/) 中的文档记录一些基础知识 , 是我们对开发中遇到的技术问题的积累
+5. [./tools/](./tools/) 中的文档记录一些好用的 cli 小工具 , 对齐的是 unix 类型操作系统 (没有维护 `windows` 的计划).
