@@ -141,6 +141,9 @@ sub protect_fenced_code {
 sub protect_fragments {
     my ($text, $protected) = @_;
 
+    # Protect GitHub-style Markdown Alert markers before punctuation changes.
+    $text =~ s{(^[ \t]{0,3}>[ \t]*\[![A-Za-z][A-Za-z0-9_-]*\])}{protect($1, $protected)}gme;
+
     # Protect complete Markdown links and images before punctuation changes.
     $text =~ s{(!?\[[^\]\n]*\]\([^)\n]*\))}{protect($1, $protected)}ge;
 
@@ -168,7 +171,10 @@ sub restore_fragments {
 sub format_plain_text {
     my ($text) = @_;
 
-    $text =~ tr/。；：，！？/.;:,!?/;
+    # Keep Chinese full stops distinguishable from existing ASCII periods.
+    # An ASCII period after an English word may be an abbreviation or decimal.
+    $text =~ s/。/\x00MD_FORMAT_FULL_STOP\x00/g;
+    $text =~ tr/；：，！？/;:,!?/;
     $text =~ s/“([^"\n]*)”/"$1"/g;
     $text =~ s/‘([^'\n]*)’/'$1'/g;
 
@@ -180,8 +186,19 @@ sub format_plain_text {
     $text = normalize_punctuation($text, ';');
     $text = normalize_punctuation($text, '!');
     $text = normalize_punctuation($text, '?');
+    $text = normalize_full_stops($text);
     $text = normalize_periods($text);
 
+    return $text;
+}
+
+sub normalize_full_stops {
+    my ($text) = @_;
+    my $marker = quotemeta("\x00MD_FORMAT_FULL_STOP\x00");
+
+    $text =~ s/(?<=\S)[ \t]*$marker[ \t]*(?=\S)/ . /g;
+    $text =~ s/(?<=\S)[ \t]*$marker[ \t]*(?=\r?\n|\z)/ ./g;
+    $text =~ s/(?<!\S)[ \t]*$marker[ \t]*(?=\S)/. /g;
     return $text;
 }
 

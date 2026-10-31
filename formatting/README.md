@@ -80,6 +80,7 @@ perl --version
 - 围栏代码块 .
 - 行内代码 .
 - Markdown 链接和图片链接 .
+- GitHub Alert 标记 , 例如 `> [!NOTE]` 和 `> [!TIP]` .
 - `http://` 和 `https://` URL.
 - HTML 标签 .
 
