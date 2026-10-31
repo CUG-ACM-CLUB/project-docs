@@ -171,13 +171,23 @@ sub format_plain_text {
 sub normalize_punctuation {
     my ($text, $punctuation) = @_;
     my $quoted = quotemeta($punctuation);
+
+    # Text on both sides: keep one horizontal space on both sides.
     $text =~ s/(?<=\S)[ \t]*$quoted[ \t]*(?=\S)/ $punctuation /g;
+
+    # End of line or file: keep the space before punctuation, never after it.
+    $text =~ s/(?<=\S)[ \t]*$quoted[ \t]*(?=\r?\n|\z)/ $punctuation/g;
+
+    # Start of line: never add leading whitespace.
+    $text =~ s/(?<!\S)[ \t]*$quoted[ \t]*(?=\S)/$punctuation /g;
     return $text;
 }
 
 sub normalize_periods {
     my ($text) = @_;
-    $text =~ s/(?<![A-Za-z0-9_])[ \t]*\.[ \t]*(?![A-Za-z0-9_])/ . /g;
+    $text =~ s/(?<![A-Za-z0-9_])(?<=\S)[ \t]*\.[ \t]*(?=\S)/ . /g;
+    $text =~ s/(?<![A-Za-z0-9_])(?<=\S)[ \t]*\.[ \t]*(?=\r?\n|\z)/ ./g;
+    $text =~ s/(?<!\S)[ \t]*\.[ \t]*(?=\S)/. /g;
     return $text;
 }
 
