@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use utf8;
+use Encode qw(decode encode FB_CROAK);
 use File::Find qw(find);
 use File::Spec;
 use Getopt::Long qw(GetOptions);
@@ -22,18 +24,26 @@ my @files = markdown_files(@ARGV);
 usage(2) unless @files;
 
 my $changed = 0;
+my @results;
 for my $file (@files) {
     my ($before, $after) = format_file($file);
     next if $before eq $after;
 
     $changed = 1;
-    if ($write) {
+    push @results, [$file, $before, $after];
+}
+
+if ($write) {
+    # All files have already been decoded successfully before any file is changed.
+    for my $result (@results) {
+        my ($file, undef, $after) = @{$result};
         write_file($file, $after);
         print "formatted $file\n";
-        next;
     }
-
-    print_diff($file, $before, $after);
+} else {
+    for my $result (@results) {
+        print_diff(@{$result});
+    }
 }
 
 exit($check && $changed ? 1 : 0);
@@ -77,10 +87,17 @@ sub markdown_files {
 
 sub format_file {
     my ($file) = @_;
-    open my $fh, '<:encoding(UTF-8)', $file or die "read $file: $!\n";
+    open my $fh, '<:raw', $file or die "read $file: $!\n";
     local $/;
-    my $text = <$fh>;
+    my $bytes = <$fh>;
     close $fh or die "close $file: $!\n";
+
+    my $text = eval { decode('UTF-8', $bytes, FB_CROAK) };
+    if ($@) {
+        my $error = $@;
+        chomp $error;
+        die "invalid UTF-8 in $file: $error\n";
+    }
 
     my @protected;
     my $body = protect_fenced_code($text, \@protected);
@@ -193,8 +210,15 @@ sub normalize_periods {
 
 sub write_file {
     my ($file, $text) = @_;
-    open my $fh, '>:encoding(UTF-8)', $file or die "write $file: $!\n";
-    print {$fh} $text or die "write $file: $!\n";
+    my $bytes = eval { encode('UTF-8', $text, FB_CROAK) };
+    if ($@) {
+        my $error = $@;
+        chomp $error;
+        die "could not encode $file as UTF-8: $error\n";
+    }
+
+    open my $fh, '>:raw', $file or die "write $file: $!\n";
+    print {$fh} $bytes or die "write $file: $!\n";
     close $fh or die "close $file: $!\n";
 }
 
