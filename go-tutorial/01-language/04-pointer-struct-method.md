@@ -109,7 +109,7 @@ func (s *Server) Handler(ctx context.Context) http.Handler {
 }
 ```
 
-`Handler` 是 `*Server` 的方法 , 接收 context , 返回一个 HTTP handler.HTTP 类型见 [net 和 net/http](../02-standard-library/04-net-http.md) .
+`Handler` 是 `*Server` 的方法 , 接收 context , 返回一个 HTTP handler . HTTP 类型见 [net 和 net/http](../02-standard-library/04-net-http.md) .
 
 ## 小练习
 
