@@ -10,7 +10,6 @@
 2. [Go 标准库](./02-standard-library/)
 3. [项目启动过程](./03-project-entry/)
 4. [项目结构](./04-project-architecture/)
-5. [练习](./05-practice/)
 
 ## 教程原则
 
