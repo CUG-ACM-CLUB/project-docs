@@ -13,6 +13,7 @@
 9. 本仓库善用文件夹分层来管理内容 , 比如一本教科书中的内容是 `3.2.5` 节 , 这一节应该放在根目录的三级子文件夹中 . 这只是一种处理方法的样例
 10. 我们希望本文档的文件名是符合字典序的 , 这样后续加入文档不会打乱原有顺序 , 以保证阅读体验 .
 11. 推荐使用 [./formatting/md-format.pl](./formatting/md-format.pl) 工具格式化 `markdown` 文档语言风格之后再提交 .
+12. `markdown`  的渲染效果应该对齐 `github` 格式规范 .  `Typora` 或者 `vscode` 部分插件提供的编辑器支持该格式的 `css` .
 
 ## 仓库结构说明
 
@@ -25,3 +26,4 @@
 5. [./tools/](./tools/) 中的文档记录一些好用的 cli 小工具 , 对齐的是 unix 类型操作系统 (没有维护 `windows` 的计划) .
 6. [./go-tutorial/](./go-tutorial/) 是结合 ACM 训练平台源码编写的 Go 入门教程 .
 7. [./formatting/](./formatting/) 保存项目文档格式规范和 Markdown 格式化脚本 .
+8. [./js-ts-tutorial/](./js-ts-tutorial/) 是 JavaScript 和 TypeScript 语法教程 , 不依赖具体项目 .
