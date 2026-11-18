@@ -102,6 +102,7 @@ sub format_file {
     my @protected;
     my $body = protect_fenced_code($text, \@protected);
     $body = protect_fragments($body, \@protected);
+    $body = protect_math($body, \@protected);
     $body = format_plain_text($body);
     $body = restore_fragments($body, \@protected);
 
@@ -162,9 +163,74 @@ sub protect {
     return "\x00MD_FORMAT_PROTECTED_${index}\x00";
 }
 
+sub is_escaped {
+    my ($text, $offset) = @_;
+    my $slashes = 0;
+    while ($offset > 0 && substr($text, --$offset, 1) eq '\\') {
+        ++$slashes;
+    }
+    return $slashes % 2;
+}
+
+sub protect_math {
+    my ($text, $protected) = @_;
+    my %closing = ('$' => '$', '$$' => '$$', '\\(' => '\\)', '\\[' => '\\]');
+    my $result = '';
+    my $copied = 0;
+
+    while ($text =~ /(\$+|\\[()[\]])/g) {
+        my $opening = $1;
+        my $start = $-[0];
+        my $content_start = $+[0];
+        next unless exists $closing{$opening};
+        next if is_escaped($text, $start);
+        # Single-dollar math follows conservative Markdown whitespace rules.
+        next if $opening eq '$'
+            && (substr($text, $content_start, 1) eq ''
+                || substr($text, $content_start, 1) =~ /\s/);
+
+        my $end;
+        while ($text =~ /(\$+|\\[()[\]])/g) {
+            my $candidate = $1;
+            my $close_start = $-[0];
+            my $close_end = $+[0];
+            my $content = substr($text, $content_start, $close_start - $content_start);
+            last if $opening eq '$' && $content =~ /[\r\n]/;
+            # Fenced code is already hidden; do not pair math across it.
+            my $crosses_block = 0;
+            while ($content =~ /\x00MD_FORMAT_PROTECTED_(\d+)\x00/g) {
+                $crosses_block = 1 if $protected->[$1] =~ /[\r\n]|^ {0,3}(?:`{3,}|~{3,})/;
+            }
+            last if $crosses_block;
+            next unless $candidate eq $closing{$opening};
+            next if is_escaped($text, $close_start);
+            next if $close_start == $content_start;
+            if ($opening eq '$') {
+                next if substr($text, $close_start - 1, 1) =~ /\s/;
+                next if substr($text, $close_end, 1) =~ /[0-9]/;
+            }
+            $end = $close_end;
+            last;
+        }
+
+        if (defined $end) {
+            $result .= substr($text, $copied, $start - $copied);
+            $result .= protect(substr($text, $start, $end - $start), $protected);
+            $copied = $end;
+            pos($text) = $end;
+        } else {
+            pos($text) = $content_start;
+        }
+    }
+    return $result . substr($text, $copied);
+}
+
 sub restore_fragments {
     my ($text, $protected) = @_;
-    $text =~ s{\x00MD_FORMAT_PROTECTED_(\d+)\x00}{$protected->[$1]}ge;
+    # Math can contain earlier protected fragments; restore newest first.
+    for (my $index = $#$protected; $index >= 0; --$index) {
+        $text =~ s{\x00MD_FORMAT_PROTECTED_${index}\x00}{$protected->[$index]}g;
+    }
     return $text;
 }
 
